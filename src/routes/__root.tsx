@@ -34,6 +34,11 @@ export const Route = createRootRoute({
       { property: "og:title", content: "Omar Waly Fashion — Gestion d'Atelier" },
       { property: "og:description", content: "Application de gestion d'atelier de couture — mesures, clients et commandes." },
       { property: "og:type", content: "website" },
+      { name: "twitter:title", content: "Omar Waly Fashion — Gestion d'Atelier" },
+      { name: "twitter:description", content: "Application de gestion d'atelier de couture — mesures, clients et commandes." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/74a6a2bd-d114-4aff-b143-1bc268c76bba/id-preview-59008f2b--4d93c22a-6a73-4388-9d5a-3b29263d2440.lovable.app-1777933704302.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/74a6a2bd-d114-4aff-b143-1bc268c76bba/id-preview-59008f2b--4d93c22a-6a73-4388-9d5a-3b29263d2440.lovable.app-1777933704302.png" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
