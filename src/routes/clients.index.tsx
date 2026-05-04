@@ -3,7 +3,7 @@ import { mockClients, mockCommandes, getCategoryLabel, getStatusLabel, getStatus
 import { Search, Filter } from "lucide-react";
 import { useState } from "react";
 
-export const Route = createFileRoute("/clients")({
+export const Route = createFileRoute("/clients/")({
   component: ClientsPage,
 });
 
