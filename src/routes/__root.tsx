@@ -66,13 +66,14 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   return (
-    <div className="min-h-screen bg-background text-foreground selection:bg-primary/20">
-      <AtelierNav />
-      <main>
-        <Outlet />
-      </main>
-      {/* Subtle dot grid texture */}
-      <div className="fixed inset-0 pointer-events-none opacity-[0.03] text-foreground bg-dot-grid" />
-    </div>
+    <CommandesProvider>
+      <div className="min-h-screen bg-background text-foreground selection:bg-primary/20">
+        <AtelierNav />
+        <main>
+          <Outlet />
+        </main>
+        <div className="fixed inset-0 pointer-events-none opacity-[0.03] text-foreground bg-dot-grid" />
+      </div>
+    </CommandesProvider>
   );
 }
