@@ -2,7 +2,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   mockClients,
   mockMesures,
-  mockCommandes,
   mesuresLabelsHomme,
   mesuresLabelsFemme,
   mesuresLabelsEnfant,
@@ -10,20 +9,25 @@ import {
   getStatusColor,
   formatCFA,
   getCategoryLabel,
-  type MesuresHomme,
-  type MesuresFemme,
-  type MesuresEnfant,
+  type OrderStatus,
 } from "@/lib/mock-data";
-import { ArrowLeft, FileText, MessageSquare } from "lucide-react";
+import { useCommandes } from "@/lib/commandes-store";
+import { ArrowLeft, FileText, MessageSquare, Check, Edit2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useState } from "react";
 
 export const Route = createFileRoute("/clients/$clientId")({
   component: ClientDetailPage,
 });
 
+const ALL_STATUSES: OrderStatus[] = ["en_cours", "essayage", "termine", "annule"];
+
 function ClientDetailPage() {
   const { clientId } = Route.useParams();
   const client = mockClients.find((c) => c.id === clientId);
+  const { commandes, updateStatut, updateNotes } = useCommandes();
+  const [editingNotes, setEditingNotes] = useState<string | null>(null);
+  const [notesValue, setNotesValue] = useState("");
 
   if (!client) {
     return (
@@ -35,11 +39,21 @@ function ClientDetailPage() {
   }
 
   const mesures = mockMesures[clientId];
-  const commandes = mockCommandes.filter((c) => c.clientId === clientId);
+  const clientCommandes = commandes.filter((c) => c.clientId === clientId);
 
-  const mesureEntries = getMesureEntries(client.categorie, mesures);
+  const mesureEntries = getMesureEntries(client.categorie);
   const hautEntries = mesureEntries.filter((_, i) => i < Math.ceil(mesureEntries.length / 2));
   const basEntries = mesureEntries.filter((_, i) => i >= Math.ceil(mesureEntries.length / 2));
+
+  const startEditNotes = (cmdId: string, current?: string) => {
+    setEditingNotes(cmdId);
+    setNotesValue(current ?? "");
+  };
+
+  const saveNotes = (cmdId: string) => {
+    updateNotes(cmdId, notesValue);
+    setEditingNotes(null);
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-12 space-y-10">
@@ -86,7 +100,6 @@ function ClientDetailPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-0">
-            {/* Column 1 */}
             <div>
               <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-6">
                 {client.categorie === "enfant" ? "Général" : "Haut du Corps"}
@@ -98,7 +111,6 @@ function ClientDetailPage() {
               </div>
             </div>
 
-            {/* Column 2 */}
             {basEntries.length > 0 && (
               <div>
                 <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-6">
@@ -118,25 +130,57 @@ function ClientDetailPage() {
         <div className="col-span-12 lg:col-span-4 space-y-6 animate-slide-up" style={{ animationDelay: "200ms" }}>
           <div className="border-b border-border pb-4">
             <h2 className="text-xs font-bold uppercase tracking-[0.2em]">
-              Commandes ({commandes.length})
+              Commandes ({clientCommandes.length})
             </h2>
           </div>
 
-          {commandes.map((cmd) => (
+          {clientCommandes.map((cmd) => (
             <div key={cmd.id} className="bg-card ring-1 ring-border p-5 space-y-4">
               <div className="flex justify-between items-start">
                 <div>
                   <p className="font-bold">{cmd.modele}</p>
                   <p className="font-mono text-xs text-muted-foreground mt-1">{cmd.id}</p>
                 </div>
-                <span className={`px-3 py-1 text-[10px] font-bold uppercase tracking-widest ${getStatusColor(cmd.statut)}`}>
-                  {getStatusLabel(cmd.statut)}
-                </span>
+                <select
+                  value={cmd.statut}
+                  onChange={(e) => updateStatut(cmd.id, e.target.value as OrderStatus)}
+                  className={`px-3 py-1 text-[10px] font-bold uppercase tracking-widest border-none outline-none cursor-pointer ${getStatusColor(cmd.statut)}`}
+                >
+                  {ALL_STATUSES.map((s) => (
+                    <option key={s} value={s}>{getStatusLabel(s)}</option>
+                  ))}
+                </select>
               </div>
 
-              {cmd.notes && (
-                <p className="text-xs text-muted-foreground italic">{cmd.notes}</p>
-              )}
+              {/* Editable notes */}
+              <div>
+                {editingNotes === cmd.id ? (
+                  <div className="flex items-center gap-2">
+                    <input
+                      autoFocus
+                      value={notesValue}
+                      onChange={(e) => setNotesValue(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && saveNotes(cmd.id)}
+                      placeholder="Ajouter une note…"
+                      className="flex-1 bg-transparent border-b border-border text-xs py-1 outline-none focus:border-primary font-mono placeholder:text-muted-foreground"
+                    />
+                    <button onClick={() => saveNotes(cmd.id)} className="text-green-600 hover:text-green-500">
+                      <Check className="size-3" />
+                    </button>
+                    <button onClick={() => setEditingNotes(null)} className="text-muted-foreground hover:text-foreground">
+                      <X className="size-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => startEditNotes(cmd.id, cmd.notes)}
+                    className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors group w-full text-left"
+                  >
+                    <Edit2 className="size-3 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                    <span className="italic">{cmd.notes || "Ajouter une note…"}</span>
+                  </button>
+                )}
+              </div>
 
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <div>
@@ -156,7 +200,6 @@ function ClientDetailPage() {
                 <div className="font-mono text-sm font-bold">{formatCFA(cmd.prixTotal)}</div>
               </div>
 
-              {/* Progress bar for active orders */}
               {cmd.statut !== "termine" && cmd.statut !== "annule" && (
                 <div className="space-y-1">
                   <div className="h-1 bg-muted overflow-hidden">
@@ -170,7 +213,7 @@ function ClientDetailPage() {
             </div>
           ))}
 
-          {commandes.length === 0 && (
+          {clientCommandes.length === 0 && (
             <p className="text-sm text-muted-foreground font-mono text-center py-8">
               Aucune commande
             </p>
@@ -199,12 +242,8 @@ function MesureRow({ label, value }: { label: string; value?: number }) {
   );
 }
 
-function getMesureEntries(categorie: string, _mesures: unknown): [string, string][] {
-  if (categorie === "homme") {
-    return Object.entries(mesuresLabelsHomme);
-  } else if (categorie === "femme") {
-    return Object.entries(mesuresLabelsFemme);
-  } else {
-    return Object.entries(mesuresLabelsEnfant);
-  }
+function getMesureEntries(categorie: string): [string, string][] {
+  if (categorie === "homme") return Object.entries(mesuresLabelsHomme);
+  if (categorie === "femme") return Object.entries(mesuresLabelsFemme);
+  return Object.entries(mesuresLabelsEnfant);
 }
