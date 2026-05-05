@@ -1,5 +1,6 @@
 import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
 import { AtelierNav } from "@/components/AtelierNav";
+import { CommandesProvider } from "@/lib/commandes-store";
 import appCss from "../styles.css?url";
 
 function NotFoundComponent() {
