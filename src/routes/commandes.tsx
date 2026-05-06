@@ -1,13 +1,15 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
-  mockClients,
   getStatusLabel,
   getStatusColor,
   formatCFA,
   type OrderStatus,
 } from "@/lib/mock-data";
+import type { Client } from "@/lib/mock-data";
 import { useCommandes } from "@/lib/commandes-store";
-import { useState } from "react";
+import { useAuth } from "@/lib/auth-context";
+import { getClients } from "@/lib/firestore";
+import { useState, useEffect } from "react";
 import { Check, Edit2, X } from "lucide-react";
 
 export const Route = createFileRoute("/commandes")({
@@ -17,10 +19,23 @@ export const Route = createFileRoute("/commandes")({
 const ALL_STATUSES: OrderStatus[] = ["en_cours", "essayage", "termine", "annule"];
 
 function CommandesPage() {
+  const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const { commandes, updateStatut, updateNotes } = useCommandes();
   const [editingNotes, setEditingNotes] = useState<string | null>(null);
   const [notesValue, setNotesValue] = useState("");
+  const [clients, setClients] = useState<Client[]>([]);
+
+  useEffect(() => {
+    if (!authLoading && !user) navigate({ to: "/login" });
+  }, [user, authLoading, navigate]);
+
+  useEffect(() => {
+    if (user) getClients().then(setClients).catch(console.error);
+  }, [user]);
+
+  if (authLoading || !user) return null;
 
   const filtered = commandes.filter(
     (c) => statusFilter === "all" || c.statut === statusFilter
@@ -47,7 +62,6 @@ function CommandesPage() {
         </p>
       </div>
 
-      {/* Filters */}
       <div className="flex gap-2 animate-slide-up" style={{ animationDelay: "100ms" }}>
         {[
           { key: "all", label: "Toutes" },
@@ -69,7 +83,6 @@ function CommandesPage() {
         ))}
       </div>
 
-      {/* Orders Table */}
       <div className="animate-slide-up" style={{ animationDelay: "200ms" }}>
         <div className="hidden md:grid grid-cols-[100px_1fr_1fr_120px_140px_140px] gap-4 px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground border-b border-border">
           <span>Réf</span>
@@ -82,7 +95,7 @@ function CommandesPage() {
 
         <div className="space-y-0 divide-y divide-border">
           {filtered.map((cmd) => {
-            const client = mockClients.find((c) => c.id === cmd.clientId);
+            const client = clients.find((c) => c.id === cmd.clientId);
             return (
               <div key={cmd.id} className="px-5 py-4 hover:bg-card/50 transition-colors space-y-3">
                 <div className="grid grid-cols-1 md:grid-cols-[100px_1fr_1fr_120px_140px_140px] gap-2 md:gap-4 items-center">
@@ -92,7 +105,7 @@ function CommandesPage() {
                     params={{ clientId: cmd.clientId }}
                     className="font-semibold text-sm hover:text-primary transition-colors"
                   >
-                    {client?.nom}
+                    {client?.nom || "—"}
                   </Link>
                   <span className="text-sm text-muted-foreground">{cmd.modele}</span>
                   <span className="font-mono text-xs">
@@ -112,7 +125,6 @@ function CommandesPage() {
                   </div>
                 </div>
 
-                {/* Notes row */}
                 <div className="flex items-center gap-2 ml-0 md:ml-[100px]">
                   {editingNotes === cmd.id ? (
                     <>
