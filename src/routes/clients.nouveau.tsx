@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -8,13 +8,27 @@ import {
   mesuresLabelsEnfant,
   type ClientCategory,
 } from "@/lib/mock-data";
+import { addClient, saveMesures } from "@/lib/firestore";
+import { useAuth } from "@/lib/auth-context";
 
 export const Route = createFileRoute("/clients/nouveau")({
   component: NouveauClientPage,
 });
 
 function NouveauClientPage() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [categorie, setCategorie] = useState<ClientCategory>("homme");
+  const [nom, setNom] = useState("");
+  const [telephone, setTelephone] = useState("");
+  const [adresse, setAdresse] = useState("");
+  const [mesuresValues, setMesuresValues] = useState<Record<string, string>>({});
+  const [saving, setSaving] = useState(false);
+
+  if (!user) {
+    navigate({ to: "/login" });
+    return null;
+  }
 
   const mesureLabels =
     categorie === "homme"
@@ -22,6 +36,26 @@ function NouveauClientPage() {
       : categorie === "femme"
         ? mesuresLabelsFemme
         : mesuresLabelsEnfant;
+
+  const handleSave = async () => {
+    if (!nom.trim()) return;
+    setSaving(true);
+    try {
+      const clientId = await addClient({ nom, telephone, adresse, categorie });
+      const mesures: Record<string, number> = {};
+      for (const [key, val] of Object.entries(mesuresValues)) {
+        if (val) mesures[key] = parseFloat(val);
+      }
+      if (Object.keys(mesures).length > 0) {
+        await saveMesures(clientId, mesures as any);
+      }
+      navigate({ to: "/clients/$clientId", params: { clientId } });
+    } catch (err) {
+      console.error("Error saving client:", err);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-12 space-y-10">
@@ -34,15 +68,14 @@ function NouveauClientPage() {
         </h1>
       </div>
 
-      {/* Client Info */}
       <section className="space-y-6 animate-slide-up" style={{ animationDelay: "100ms" }}>
         <h2 className="text-xs font-bold uppercase tracking-[0.2em] border-b border-border pb-4">
           Informations Personnelles
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <InputField label="Nom complet" placeholder="Ex: Amadou Diallo" />
-          <InputField label="Téléphone" placeholder="+221 77 000 00 00" />
-          <InputField label="Adresse" placeholder="Dakar, Plateau" />
+          <InputField label="Nom complet" placeholder="Ex: Amadou Diallo" value={nom} onChange={setNom} />
+          <InputField label="Téléphone" placeholder="+221 77 000 00 00" value={telephone} onChange={setTelephone} />
+          <InputField label="Adresse" placeholder="Dakar, Plateau" value={adresse} onChange={setAdresse} />
           <div className="space-y-2">
             <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
               Catégorie
@@ -51,7 +84,7 @@ function NouveauClientPage() {
               {(["homme", "femme", "enfant"] as const).map((cat) => (
                 <button
                   key={cat}
-                  onClick={() => setCategorie(cat)}
+                  onClick={() => { setCategorie(cat); setMesuresValues({}); }}
                   className={`flex-1 py-3 text-xs font-bold uppercase tracking-widest transition-colors ${
                     categorie === cat
                       ? "bg-foreground text-background"
@@ -66,7 +99,6 @@ function NouveauClientPage() {
         </div>
       </section>
 
-      {/* Measurements */}
       <section className="space-y-6 animate-slide-up" style={{ animationDelay: "200ms" }}>
         <h2 className="text-xs font-bold uppercase tracking-[0.2em] border-b border-border pb-4">
           Mesures ({categorie === "homme" ? "Homme" : categorie === "femme" ? "Femme" : "Enfant"})
@@ -82,6 +114,8 @@ function NouveauClientPage() {
                   type="number"
                   step="0.1"
                   placeholder="—"
+                  value={mesuresValues[key] || ""}
+                  onChange={(e) => setMesuresValues((prev) => ({ ...prev, [key]: e.target.value }))}
                   className="w-full bg-transparent border-b border-border py-2 font-mono text-2xl focus:outline-none focus:border-foreground transition-colors"
                 />
                 <span className="font-mono text-xs text-muted-foreground">
@@ -93,20 +127,16 @@ function NouveauClientPage() {
         </div>
       </section>
 
-      {/* Actions */}
       <div className="flex gap-4 pt-8 border-t border-border animate-slide-up" style={{ animationDelay: "300ms" }}>
-        <Button variant="atelier" className="flex-1 py-6">
-          Enregistrer le Client
-        </Button>
-        <Button variant="atelierOutline" className="flex-1 py-6">
-          Enregistrer & Nouvelle Commande
+        <Button variant="atelier" className="flex-1 py-6" onClick={handleSave} disabled={saving || !nom.trim()}>
+          {saving ? "Enregistrement…" : "Enregistrer le Client"}
         </Button>
       </div>
     </div>
   );
 }
 
-function InputField({ label, placeholder }: { label: string; placeholder: string }) {
+function InputField({ label, placeholder, value, onChange }: { label: string; placeholder: string; value: string; onChange: (v: string) => void }) {
   return (
     <div className="space-y-2 group">
       <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground group-focus-within:text-primary transition-colors">
@@ -115,6 +145,8 @@ function InputField({ label, placeholder }: { label: string; placeholder: string
       <input
         type="text"
         placeholder={placeholder}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
         className="w-full bg-transparent border-b border-border py-2 text-sm focus:outline-none focus:border-foreground transition-colors"
       />
     </div>
