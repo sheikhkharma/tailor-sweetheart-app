@@ -1,6 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Users, ClipboardList, LayoutDashboard, Plus } from "lucide-react";
+import { Users, ClipboardList, LayoutDashboard, Plus, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/lib/auth-context";
 
 const navItems = [
   { label: "Tableau de Bord", to: "/", icon: LayoutDashboard },
@@ -12,6 +13,7 @@ export function AtelierNav() {
   const currentPath = useRouterState({
     select: (s) => s.location.pathname,
   });
+  const { profile, logout } = useAuth();
 
   return (
     <nav className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-md px-6 py-4 flex items-center justify-between">
@@ -36,12 +38,26 @@ export function AtelierNav() {
           ))}
         </div>
       </div>
-      <Link to="/clients/nouveau">
-        <Button variant="atelier">
-          <Plus className="size-4" />
-          Nouveau Client
-        </Button>
-      </Link>
+      <div className="flex items-center gap-4">
+        {profile && (
+          <span className="hidden sm:block text-xs font-mono text-muted-foreground">
+            {profile.displayName || profile.email}
+          </span>
+        )}
+        <Link to="/clients/nouveau">
+          <Button variant="atelier">
+            <Plus className="size-4" />
+            Nouveau Client
+          </Button>
+        </Link>
+        <button
+          onClick={logout}
+          className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+          title="Déconnexion"
+        >
+          <LogOut className="size-4" />
+        </button>
+      </div>
     </nav>
   );
 }

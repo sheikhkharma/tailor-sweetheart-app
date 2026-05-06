@@ -1,17 +1,35 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { mockClients, mockCommandes, getCategoryLabel, getStatusLabel, getStatusColor } from "@/lib/mock-data";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { getStatusLabel, getStatusColor, getCategoryLabel } from "@/lib/mock-data";
+import type { Client } from "@/lib/mock-data";
 import { Search, Filter } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/lib/auth-context";
+import { useCommandes } from "@/lib/commandes-store";
+import { getClients } from "@/lib/firestore";
 
 export const Route = createFileRoute("/clients/")({
   component: ClientsPage,
 });
 
 function ClientsPage() {
+  const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
+  const { commandes } = useCommandes();
+  const [clients, setClients] = useState<Client[]>([]);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<string>("all");
 
-  const filtered = mockClients.filter((c) => {
+  useEffect(() => {
+    if (!authLoading && !user) navigate({ to: "/login" });
+  }, [user, authLoading, navigate]);
+
+  useEffect(() => {
+    if (user) getClients().then(setClients).catch(console.error);
+  }, [user]);
+
+  if (authLoading || !user) return null;
+
+  const filtered = clients.filter((c) => {
     const matchSearch = c.nom.toLowerCase().includes(search.toLowerCase()) || c.telephone.includes(search);
     const matchFilter = filter === "all" || c.categorie === filter;
     return matchSearch && matchFilter;
@@ -24,11 +42,10 @@ function ClientsPage() {
           Clients
         </h1>
         <p className="text-muted-foreground font-mono text-sm mt-2">
-          {mockClients.length} clients enregistrés
+          {clients.length} clients enregistrés
         </p>
       </div>
 
-      {/* Search & Filter */}
       <div className="flex flex-col sm:flex-row gap-4 animate-slide-up" style={{ animationDelay: "100ms" }}>
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
@@ -58,10 +75,9 @@ function ClientsPage() {
         </div>
       </div>
 
-      {/* Client List */}
       <div className="space-y-3 animate-slide-up" style={{ animationDelay: "200ms" }}>
         {filtered.map((client) => {
-          const clientOrders = mockCommandes.filter((c) => c.clientId === client.id);
+          const clientOrders = commandes.filter((c) => c.clientId === client.id);
           const activeOrder = clientOrders.find((c) => c.statut !== "termine" && c.statut !== "annule");
 
           return (

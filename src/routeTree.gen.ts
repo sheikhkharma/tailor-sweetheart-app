@@ -9,12 +9,18 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as CommandesRouteImport } from './routes/commandes'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ClientsIndexRouteImport } from './routes/clients.index'
 import { Route as ClientsNouveauRouteImport } from './routes/clients.nouveau'
 import { Route as ClientsClientIdRouteImport } from './routes/clients.$clientId'
 
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CommandesRoute = CommandesRouteImport.update({
   id: '/commandes',
   path: '/commandes',
@@ -44,6 +50,7 @@ const ClientsClientIdRoute = ClientsClientIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/commandes': typeof CommandesRoute
+  '/login': typeof LoginRoute
   '/clients/$clientId': typeof ClientsClientIdRoute
   '/clients/nouveau': typeof ClientsNouveauRoute
   '/clients/': typeof ClientsIndexRoute
@@ -51,6 +58,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/commandes': typeof CommandesRoute
+  '/login': typeof LoginRoute
   '/clients/$clientId': typeof ClientsClientIdRoute
   '/clients/nouveau': typeof ClientsNouveauRoute
   '/clients': typeof ClientsIndexRoute
@@ -59,6 +67,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/commandes': typeof CommandesRoute
+  '/login': typeof LoginRoute
   '/clients/$clientId': typeof ClientsClientIdRoute
   '/clients/nouveau': typeof ClientsNouveauRoute
   '/clients/': typeof ClientsIndexRoute
@@ -68,6 +77,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/commandes'
+    | '/login'
     | '/clients/$clientId'
     | '/clients/nouveau'
     | '/clients/'
@@ -75,6 +85,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/commandes'
+    | '/login'
     | '/clients/$clientId'
     | '/clients/nouveau'
     | '/clients'
@@ -82,6 +93,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/commandes'
+    | '/login'
     | '/clients/$clientId'
     | '/clients/nouveau'
     | '/clients/'
@@ -90,6 +102,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CommandesRoute: typeof CommandesRoute
+  LoginRoute: typeof LoginRoute
   ClientsClientIdRoute: typeof ClientsClientIdRoute
   ClientsNouveauRoute: typeof ClientsNouveauRoute
   ClientsIndexRoute: typeof ClientsIndexRoute
@@ -97,6 +110,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/commandes': {
       id: '/commandes'
       path: '/commandes'
@@ -138,6 +158,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CommandesRoute: CommandesRoute,
+  LoginRoute: LoginRoute,
   ClientsClientIdRoute: ClientsClientIdRoute,
   ClientsNouveauRoute: ClientsNouveauRoute,
   ClientsIndexRoute: ClientsIndexRoute,

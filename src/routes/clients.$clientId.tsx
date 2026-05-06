@@ -1,7 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
-  mockClients,
-  mockMesures,
   mesuresLabelsHomme,
   mesuresLabelsFemme,
   mesuresLabelsEnfant,
@@ -11,10 +9,13 @@ import {
   getCategoryLabel,
   type OrderStatus,
 } from "@/lib/mock-data";
+import type { Client, Mesures } from "@/lib/mock-data";
 import { useCommandes } from "@/lib/commandes-store";
+import { useAuth } from "@/lib/auth-context";
+import { getClient, getMesures } from "@/lib/firestore";
 import { ArrowLeft, FileText, MessageSquare, Check, Edit2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export const Route = createFileRoute("/clients/$clientId")({
   component: ClientDetailPage,
@@ -24,10 +25,32 @@ const ALL_STATUSES: OrderStatus[] = ["en_cours", "essayage", "termine", "annule"
 
 function ClientDetailPage() {
   const { clientId } = Route.useParams();
-  const client = mockClients.find((c) => c.id === clientId);
+  const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
   const { commandes, updateStatut, updateNotes } = useCommandes();
   const [editingNotes, setEditingNotes] = useState<string | null>(null);
   const [notesValue, setNotesValue] = useState("");
+  const [client, setClient] = useState<Client | null>(null);
+  const [mesures, setMesures] = useState<Mesures | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!authLoading && !user) navigate({ to: "/login" });
+  }, [user, authLoading, navigate]);
+
+  useEffect(() => {
+    if (user) {
+      Promise.all([getClient(clientId), getMesures(clientId)])
+        .then(([c, m]) => {
+          setClient(c);
+          setMesures(m);
+        })
+        .catch(console.error)
+        .finally(() => setLoading(false));
+    }
+  }, [user, clientId]);
+
+  if (authLoading || loading || !user) return null;
 
   if (!client) {
     return (
@@ -38,9 +61,7 @@ function ClientDetailPage() {
     );
   }
 
-  const mesures = mockMesures[clientId];
   const clientCommandes = commandes.filter((c) => c.clientId === clientId);
-
   const mesureEntries = getMesureEntries(client.categorie);
   const hautEntries = mesureEntries.filter((_, i) => i < Math.ceil(mesureEntries.length / 2));
   const basEntries = mesureEntries.filter((_, i) => i >= Math.ceil(mesureEntries.length / 2));
@@ -57,7 +78,6 @@ function ClientDetailPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-12 space-y-10">
-      {/* Back & Header */}
       <div className="animate-slide-up">
         <Link to="/clients" className="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground mb-6">
           <ArrowLeft className="size-3" /> Retour aux clients
@@ -65,7 +85,7 @@ function ClientDetailPage() {
         <div className="flex items-end justify-between">
           <div>
             <p className="font-mono text-sm text-muted-foreground mb-1">
-              ID: {new Date(client.createdAt).getFullYear()}-{client.nom.split(" ").map(w => w[0]).join("")}-{clientId.padStart(3, "0")}
+              ID: {clientId}
             </p>
             <h1 className="text-4xl font-extrabold tracking-tighter uppercase leading-none">
               {client.nom}
@@ -88,15 +108,11 @@ function ClientDetailPage() {
       </div>
 
       <div className="grid grid-cols-12 gap-8">
-        {/* Measurements */}
         <div className="col-span-12 lg:col-span-8 animate-slide-up" style={{ animationDelay: "100ms" }}>
           <div className="flex items-center justify-between mb-6 border-b border-border pb-4">
             <h2 className="text-xs font-bold uppercase tracking-[0.2em]">
               Mesures ({getCategoryLabel(client.categorie)})
             </h2>
-            <span className="font-mono text-[10px] text-muted-foreground">
-              Dernière mise à jour: {new Date().toLocaleDateString("fr-FR")}
-            </span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-0">
@@ -106,7 +122,7 @@ function ClientDetailPage() {
               </h3>
               <div className="space-y-0">
                 {hautEntries.map(([key, label]) => (
-                  <MesureRow key={key} label={label} value={(mesures as Record<string, number | undefined>)[key]} />
+                  <MesureRow key={key} label={label} value={mesures ? (mesures as Record<string, number | undefined>)[key] : undefined} />
                 ))}
               </div>
             </div>
@@ -118,7 +134,7 @@ function ClientDetailPage() {
                 </h3>
                 <div className="space-y-0">
                   {basEntries.map(([key, label]) => (
-                    <MesureRow key={key} label={label} value={(mesures as Record<string, number | undefined>)[key]} />
+                    <MesureRow key={key} label={label} value={mesures ? (mesures as Record<string, number | undefined>)[key] : undefined} />
                   ))}
                 </div>
               </div>
@@ -126,7 +142,6 @@ function ClientDetailPage() {
           </div>
         </div>
 
-        {/* Sidebar: Orders */}
         <div className="col-span-12 lg:col-span-4 space-y-6 animate-slide-up" style={{ animationDelay: "200ms" }}>
           <div className="border-b border-border pb-4">
             <h2 className="text-xs font-bold uppercase tracking-[0.2em]">
@@ -152,7 +167,6 @@ function ClientDetailPage() {
                 </select>
               </div>
 
-              {/* Editable notes */}
               <div>
                 {editingNotes === cmd.id ? (
                   <div className="flex items-center gap-2">
