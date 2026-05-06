@@ -1,6 +1,7 @@
 import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
 import { AtelierNav } from "@/components/AtelierNav";
 import { CommandesProvider } from "@/lib/commandes-store";
+import { AuthProvider, useAuth } from "@/lib/auth-context";
 import appCss from "../styles.css?url";
 
 function NotFoundComponent() {
@@ -66,14 +67,35 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   return (
-    <CommandesProvider>
-      <div className="min-h-screen bg-background text-foreground selection:bg-primary/20">
-        <AtelierNav />
-        <main>
-          <Outlet />
-        </main>
-        <div className="fixed inset-0 pointer-events-none opacity-[0.03] text-foreground bg-dot-grid" />
+    <AuthProvider>
+      <CommandesProvider>
+        <AppShell />
+      </CommandesProvider>
+    </AuthProvider>
+  );
+}
+
+function AppShell() {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-3">
+          <div className="size-8 border-2 border-foreground border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="font-mono text-xs text-muted-foreground uppercase tracking-widest">Chargement…</p>
+        </div>
       </div>
-    </CommandesProvider>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background text-foreground selection:bg-primary/20">
+      {user && <AtelierNav />}
+      <main>
+        <Outlet />
+      </main>
+      <div className="fixed inset-0 pointer-events-none opacity-[0.03] text-foreground bg-dot-grid" />
+    </div>
   );
 }
