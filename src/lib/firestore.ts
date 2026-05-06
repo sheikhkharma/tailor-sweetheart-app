@@ -56,11 +56,7 @@ export async function getMesures(clientId: string): Promise<Mesures | null> {
 }
 
 export async function saveMesures(clientId: string, mesures: Mesures) {
-  await updateDoc(doc(db, "mesures", clientId), mesures as DocumentData).catch(() => {
-    // If doc doesn't exist, create it
-    const { setDoc } = require("firebase/firestore");
-    return setDoc(doc(db, "mesures", clientId), mesures);
-  });
+  await setDoc(doc(db, "mesures", clientId), mesures, { merge: true });
 }
 
 // ── Commandes ──
