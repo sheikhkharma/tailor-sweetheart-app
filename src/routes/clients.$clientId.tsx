@@ -25,7 +25,7 @@ const ALL_STATUSES: OrderStatus[] = ["en_cours", "essayage", "termine", "annule"
 
 function ClientDetailPage() {
   const { clientId } = Route.useParams();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, isAdmin } = useAuth();
   const navigate = useNavigate();
   const { commandes, updateStatut, updateNotes } = useCommandes();
   const [editingNotes, setEditingNotes] = useState<string | null>(null);
