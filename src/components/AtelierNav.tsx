@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Users, ClipboardList, LayoutDashboard, Plus, LogOut } from "lucide-react";
+import { Users, ClipboardList, LayoutDashboard, Plus, LogOut, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
 
@@ -8,6 +8,7 @@ const navItems = [
   { label: "Clients", to: "/clients", icon: Users },
   { label: "Commandes", to: "/commandes", icon: ClipboardList },
 ] as const;
+
 
 export function AtelierNav() {
   const currentPath = useRouterState({
