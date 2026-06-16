@@ -37,6 +37,19 @@ export function AtelierNav() {
               {item.label}
             </Link>
           ))}
+          {isAdmin && (
+            <Link
+              to="/admin"
+              className={`flex items-center gap-1.5 transition-colors ${
+                currentPath === "/admin"
+                  ? "text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Shield className="size-4" />
+              Admin
+            </Link>
+          )}
         </div>
       </div>
       <div className="flex items-center gap-4">
