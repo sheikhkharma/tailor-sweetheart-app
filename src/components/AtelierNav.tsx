@@ -14,7 +14,7 @@ export function AtelierNav() {
   const currentPath = useRouterState({
     select: (s) => s.location.pathname,
   });
-  const { profile, logout } = useAuth();
+  const { profile, logout, isAdmin } = useAuth();
 
   return (
     <nav className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-md px-6 py-4 flex items-center justify-between">
