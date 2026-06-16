@@ -89,3 +89,35 @@ export async function updateCommandeStatut(id: string, statut: OrderStatus) {
 export async function updateCommandeNotes(id: string, notes: string) {
   await updateDoc(doc(db, "commandes", id), { notes });
 }
+
+// ── Users / Rôles ──
+
+export type AppRole = "admin" | "tailleur";
+
+export interface AppUser {
+  uid: string;
+  email: string | null;
+  displayName: string | null;
+  photoURL: string | null;
+  role: AppRole;
+}
+
+const usersCol = collection(db, "users");
+
+export async function getUsers(): Promise<AppUser[]> {
+  const snap = await getDocs(usersCol);
+  return snap.docs.map((d) => {
+    const data = d.data();
+    return {
+      uid: d.id,
+      email: data.email ?? null,
+      displayName: data.displayName ?? null,
+      photoURL: data.photoURL ?? null,
+      role: (data.role as AppRole) ?? "tailleur",
+    };
+  });
+}
+
+export async function updateUserRole(uid: string, role: AppRole) {
+  await updateDoc(doc(db, "users", uid), { role });
+}
