@@ -25,7 +25,7 @@ const ALL_STATUSES: OrderStatus[] = ["en_cours", "essayage", "termine", "annule"
 
 function ClientDetailPage() {
   const { clientId } = Route.useParams();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, isAdmin } = useAuth();
   const navigate = useNavigate();
   const { commandes, updateStatut, updateNotes } = useCommandes();
   const [editingNotes, setEditingNotes] = useState<string | null>(null);
@@ -95,10 +95,12 @@ function ClientDetailPage() {
             </p>
           </div>
           <div className="flex gap-3">
-            <Button variant="atelierOutline">
-              <FileText className="size-4" />
-              Fiche PDF
-            </Button>
+            {isAdmin && (
+              <Button variant="atelierOutline">
+                <FileText className="size-4" />
+                Fiche PDF
+              </Button>
+            )}
             <Button variant="atelierOutline">
               <MessageSquare className="size-4" />
               SMS

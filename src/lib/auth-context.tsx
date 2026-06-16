@@ -28,6 +28,7 @@ interface AuthContextType {
   user: User | null;
   profile: UserProfile | null;
   loading: boolean;
+  isAdmin: boolean;
   loginEmail: (email: string, password: string) => Promise<void>;
   registerEmail: (email: string, password: string, displayName: string) => Promise<void>;
   loginGoogle: () => Promise<void>;
@@ -103,7 +104,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, loginEmail, registerEmail, loginGoogle, logout }}>
+    <AuthContext.Provider value={{ user, profile, loading, isAdmin: profile?.role === "admin", loginEmail, registerEmail, loginGoogle, logout }}>
       {children}
     </AuthContext.Provider>
   );

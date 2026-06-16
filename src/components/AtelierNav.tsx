@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Users, ClipboardList, LayoutDashboard, Plus, LogOut } from "lucide-react";
+import { Users, ClipboardList, LayoutDashboard, Plus, LogOut, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
 
@@ -9,11 +9,12 @@ const navItems = [
   { label: "Commandes", to: "/commandes", icon: ClipboardList },
 ] as const;
 
+
 export function AtelierNav() {
   const currentPath = useRouterState({
     select: (s) => s.location.pathname,
   });
-  const { profile, logout } = useAuth();
+  const { profile, logout, isAdmin } = useAuth();
 
   return (
     <nav className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-md px-6 py-4 flex items-center justify-between">
@@ -36,6 +37,19 @@ export function AtelierNav() {
               {item.label}
             </Link>
           ))}
+          {isAdmin && (
+            <Link
+              to="/admin"
+              className={`flex items-center gap-1.5 transition-colors ${
+                currentPath === "/admin"
+                  ? "text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Shield className="size-4" />
+              Admin
+            </Link>
+          )}
         </div>
       </div>
       <div className="flex items-center gap-4">
