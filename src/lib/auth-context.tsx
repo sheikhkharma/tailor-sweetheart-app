@@ -69,8 +69,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
       if (firebaseUser) {
-        const p = await ensureProfile(firebaseUser);
-        setProfile(p);
+        try {
+          const p = await ensureProfile(firebaseUser);
+          setProfile(p);
+        } catch (err) {
+          // Firestore peut être indisponible (API désactivée, hors-ligne…).
+          // On ne bloque pas l'app : on retombe sur un profil minimal.
+          console.error("Profil indisponible:", err);
+          setProfile({
+            uid: firebaseUser.uid,
+            email: firebaseUser.email,
+            displayName: firebaseUser.displayName,
+            photoURL: firebaseUser.photoURL,
+            role: "tailleur",
+          });
+        }
       } else {
         setProfile(null);
       }
