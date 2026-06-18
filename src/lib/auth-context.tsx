@@ -29,6 +29,7 @@ interface AuthContextType {
   profile: UserProfile | null;
   loading: boolean;
   isAdmin: boolean;
+  firestoreError: string | null;
   loginEmail: (email: string, password: string) => Promise<void>;
   registerEmail: (email: string, password: string, displayName: string) => Promise<void>;
   loginGoogle: () => Promise<void>;
