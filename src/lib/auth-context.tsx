@@ -29,6 +29,7 @@ interface AuthContextType {
   profile: UserProfile | null;
   loading: boolean;
   isAdmin: boolean;
+  firestoreError: string | null;
   loginEmail: (email: string, password: string) => Promise<void>;
   registerEmail: (email: string, password: string, displayName: string) => Promise<void>;
   loginGoogle: () => Promise<void>;
@@ -64,18 +65,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [firestoreError, setFirestoreError] = useState<string | null>(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
+      setFirestoreError(null);
       if (firebaseUser) {
         try {
           const p = await ensureProfile(firebaseUser);
           setProfile(p);
-        } catch (err) {
-          // Firestore peut être indisponible (API désactivée, hors-ligne…).
-          // On ne bloque pas l'app : on retombe sur un profil minimal.
-          console.error("Profil indisponible:", err);
+        } catch (err: any) {
+          const msg = err?.message || "";
+          if (msg.includes("SERVICE_DISABLED") || msg.includes("firestore.googleapis.com")) {
+            setFirestoreError(
+              "La base de données Firestore est désactivée. Veuillez l'activer dans la console Firebase pour utiliser l'application."
+            );
+          } else {
+            setFirestoreError(
+              "Impossible de se connecter à la base de données. Vérifiez votre connexion ou contactez l'administrateur."
+            );
+          }
           setProfile({
             uid: firebaseUser.uid,
             email: firebaseUser.email,
@@ -117,7 +127,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, isAdmin: profile?.role === "admin", loginEmail, registerEmail, loginGoogle, logout }}>
+    <AuthContext.Provider value={{ user, profile, loading, isAdmin: profile?.role === "admin", firestoreError, loginEmail, registerEmail, loginGoogle, logout }}>
       {children}
     </AuthContext.Provider>
   );
