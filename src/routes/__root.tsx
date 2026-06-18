@@ -76,7 +76,29 @@ function RootComponent() {
 }
 
 function AppShell() {
-  const { user, loading } = useAuth();
+  const { user, loading, firestoreError } = useAuth();
+
+  if (firestoreError) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+        <div className="max-w-md text-center space-y-4">
+          <div className="size-12 rounded-full bg-destructive/10 flex items-center justify-center mx-auto">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-destructive"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
+          </div>
+          <h1 className="text-xl font-bold text-foreground">Problème de connexion</h1>
+          <p className="text-sm text-muted-foreground leading-relaxed">{firestoreError}</p>
+          <div className="pt-2">
+            <button
+              onClick={() => window.location.reload()}
+              className="inline-flex items-center justify-center bg-foreground text-background px-6 py-3 text-xs font-bold uppercase tracking-widest hover:bg-primary transition-colors"
+            >
+              Réessayer
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
